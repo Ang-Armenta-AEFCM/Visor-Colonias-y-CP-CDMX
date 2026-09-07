@@ -1,8 +1,10 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Visor Territorial de Escuelas · CDMX</title>
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
-<link rel="stylesheet" href="style.css?v=7"></head><body>
+<link rel="stylesheet" href="style.css?v=10"></head><body>
 <header class="topbar"><div><span class="eyebrow">Centros educativos · Ciudad de México</span><h1>Visor Territorial de Escuelas</h1><p>Explora CCT, inmuebles, programas, códigos postales, colonias y asentamientos humanos sin mezclar unidades de conteo.</p></div><nav class="mainnav"><button class="navtab active" data-view="mapView">Mapa</button><button class="navtab" data-view="statsView">Estadísticas</button></nav><div class="header-actions"><button id="fitAll">Ver toda CDMX</button><button id="fullscreen">Pantalla completa</button></div></header>
 <section id="mapView" class="view active"><main class="layout"><aside class="sidebar" id="sidebar">
 <section class="panel"><h2>Resumen visible</h2><div class="kpis"><div><strong id="kTotal">0</strong><span>CCT</span></div><div><strong id="kInm">0</strong><span>Inmuebles</span></div><div><strong id="kPub">0</strong><span>Públicas</span></div><div><strong id="kPri">0</strong><span>Privadas</span></div><div><strong id="kProg">0</strong><span>Con programa</span></div></div><p id="scopeNote" class="hint"></p></section>
@@ -20,4 +22,4 @@
 <div class="stats-grid"><section class="stat-card"><h3>CP con más inmuebles</h3><div id="cpTop" class="ranking"></div></section><section class="stat-card"><h3>CP con menos inmuebles</h3><div id="cpBottom" class="ranking"></div></section><section class="stat-card"><h3>Colonias con más inmuebles</h3><div id="colTop" class="ranking"></div></section><section class="stat-card"><h3>Colonias con menos inmuebles</h3><div id="colBottom" class="ranking"></div></section></div>
 <section class="stat-card inmueble-card"><div class="card-title"><div><h3>Inmuebles del territorio seleccionado</h3><p class="hint">Cada inmueble agrupa los CCT ubicados en las mismas coordenadas. Haz clic para ver su información.</p></div><strong id="inmCount">0</strong></div><div id="inmuebleList" class="inmueble-list"></div></section></div></section>
 <div id="inmModal" class="modal"><div class="modal-card"><button id="closeModal" class="modal-close">×</button><h2 id="inmTitle">Inmueble</h2><div id="inmBody"></div><button id="goMapInm">Ver en mapa</button></div></div>
-<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script><script src="script.js?v=8"></script></body></html>
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script><script src="script.js?v=10"></script></body></html>
