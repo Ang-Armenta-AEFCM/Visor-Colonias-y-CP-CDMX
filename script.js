@@ -189,7 +189,7 @@ function updateSelectedProperties(){
     f.properties.selected=sel?1:0;
     if(sel){
       alc3d.push(cloneTowerFeature(f,{
-        towerHeight: alcCount===1 ? 2800 : 2200,
+        towerHeight: alcCount===1 ? 900 : 650,
         towerColor: alcCount===1 ? '#c9535b' : '#cf6a70'
       }));
     }
@@ -205,7 +205,7 @@ function updateSelectedProperties(){
     f.properties.inScope=scope?1:0;f.properties.hasInm=has?1:0;f.properties.statusSelected=status?1:0;f.properties.selected=selected?1:0;
     if(activeTerritoryType==='cp'&&scope){
       cp3d.push(cloneTowerFeature(f,{
-        towerHeight:selected?1800:(status?650:80),
+        towerHeight:selected?550:(status?220:30),
         towerColor:selected?'#153f60':(has?'#4f8db7':'#d27070')
       }));
     }
@@ -220,7 +220,7 @@ function updateSelectedProperties(){
     f.properties.inScope=scope?1:0;f.properties.hasInm=has?1:0;f.properties.statusSelected=status?1:0;f.properties.selected=selected?1:0;
     if(activeTerritoryType==='colonia'&&scope){
       col3d.push(cloneTowerFeature(f,{
-        towerHeight:selected?1200:(status?450:60),
+        towerHeight:selected?400:(status?160:20),
         towerColor:selected?'#5c3f70':(has?'#866aa0':'#d37a7a')
       }));
     }
