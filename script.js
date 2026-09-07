@@ -7,6 +7,7 @@ let meta,schools=[],visible=[],inmuebles=[],visibleInm=[],programMap=new Map(),s
 let alcGeo,cpGeo,colGeo,alcLabels=[],activeTerritoryType=null;
 const lightStyle={version:8,sources:{osm:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'© OpenStreetMap contributors'}},layers:[{id:'bg',type:'background',paint:{'background-color':'#eef3f6'}},{id:'osm',type:'raster',source:'osm',paint:{'raster-opacity':.95}}]};
 const darkStyle={version:8,sources:{osm:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'© OpenStreetMap contributors'}},layers:[{id:'bg',type:'background',paint:{'background-color':'#17222b'}},{id:'osm',type:'raster',source:'osm',paint:{'raster-opacity':.55,'raster-brightness-max':.45,'raster-saturation':-1,'raster-contrast':.25}}]};
+if(typeof maplibregl==='undefined'){document.getElementById('loading').textContent='No se pudo cargar el motor del mapa. Recarga la página.';throw new Error('MapLibre GL no disponible');}
 const map=new maplibregl.Map({container:'map',style:lightStyle,center:[-99.13,19.35],zoom:9.65,pitch:0,bearing:0,antialias:true,maxZoom:19,maxPitch:85});
 map.addControl(new maplibregl.NavigationControl({showCompass:true}),'top-right');
 
