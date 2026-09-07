@@ -40,10 +40,10 @@ function decorateAlcaldias(g){
 function installMapLayers(){
   if(map.getSource('alcaldias'))return;
   map.addSource('alcaldias',{type:'geojson',data:alcGeo});map.addSource('cp',{type:'geojson',data:cpGeo});map.addSource('colonias',{type:'geojson',data:colGeo});map.addSource('schools',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
-  map.addLayer({id:'alc-extrude',type:'fill-extrusion',source:'alcaldias',paint:{'fill-extrusion-color':['case',['==',['get','selected'],1],'#d05d61','#8aa8be'],'fill-extrusion-height':['get','alcHeight'],'fill-extrusion-base':0,'fill-extrusion-opacity':['case',['==',['get','territoryMode'],1],.28,.72]}});
+  map.addLayer({id:'alc-extrude',type:'fill-extrusion',source:'alcaldias',paint:{'fill-extrusion-color':['case',['==',['get','selected'],1],'#d05d61','#8aa8be'],'fill-extrusion-height':['coalesce',['to-number',['get','alcHeight']],0],'fill-extrusion-base':0,'fill-extrusion-opacity':['case',['==',['get','selected'],1],.94,['==',['get','territoryMode'],1],.18,.48],'fill-extrusion-vertical-gradient':true}});
   map.addLayer({id:'alc-line',type:'line',source:'alcaldias',paint:{'line-color':'#536c7d','line-width':['case',['==',['get','selected'],1],2.2,1.1]}});
-  map.addLayer({id:'cp-extrude',type:'fill-extrusion',source:'cp',layout:{visibility:'none'},paint:{'fill-extrusion-color':['case',['==',['get','selected'],1],'#234f70',['==',['get','hasInm'],1],'#5b8fb4','#cf7777'],'fill-extrusion-height':['case',['==',['get','selected'],1],1800,['==',['get','statusSelected'],1],900,40],'fill-extrusion-opacity':['case',['==',['get','inScope'],1],.78,0]}});
-  map.addLayer({id:'col-extrude',type:'fill-extrusion',source:'colonias',layout:{visibility:'none'},paint:{'fill-extrusion-color':['case',['==',['get','selected'],1],'#654675',['==',['get','hasInm'],1],'#8d72a2','#d58383'],'fill-extrusion-height':['case',['==',['get','selected'],1],1500,['==',['get','statusSelected'],1],760,35],'fill-extrusion-opacity':['case',['==',['get','inScope'],1],.76,0]}});
+  map.addLayer({id:'cp-extrude',type:'fill-extrusion',source:'cp',layout:{visibility:'none'},paint:{'fill-extrusion-color':['case',['==',['get','selected'],1],'#234f70',['==',['get','hasInm'],1],'#5b8fb4','#cf7777'],'fill-extrusion-height':['case',['==',['get','selected'],1],3000,['==',['get','statusSelected'],1],1700,80],'fill-extrusion-base':0,'fill-extrusion-opacity':['case',['==',['get','inScope'],1],.9,0],'fill-extrusion-vertical-gradient':true}});
+  map.addLayer({id:'col-extrude',type:'fill-extrusion',source:'colonias',layout:{visibility:'none'},paint:{'fill-extrusion-color':['case',['==',['get','selected'],1],'#654675',['==',['get','hasInm'],1],'#8d72a2','#d58383'],'fill-extrusion-height':['case',['==',['get','selected'],1],2700,['==',['get','statusSelected'],1],1500,70],'fill-extrusion-base':0,'fill-extrusion-opacity':['case',['==',['get','inScope'],1],.9,0],'fill-extrusion-vertical-gradient':true}});
   map.addLayer({id:'schools',type:'circle',source:'schools',paint:{'circle-radius':4.5,'circle-color':['get','color'],'circle-stroke-width':1,'circle-stroke-color':'#fff','circle-opacity':.88}});
   map.on('click','schools',e=>{const id=e.features?.[0]?.properties?.idx,x=schools[Number(id)];if(x)showDetail(x)});
   map.on('mouseenter','schools',()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave','schools',()=>map.getCanvas().style.cursor='');
@@ -126,26 +126,26 @@ function renderLegend(){let mode=$('colorMode').value,h='<b>Leyenda</b>';if(acti
 
 function updateSelectedProperties(){
   const s=state(),alcCount=s.alcaldias.size,territoryMode=activeTerritoryType?1:0,cpMode=$('fCPStatus').value,colMode=$('fColStatus').value;
-  for(const f of alcGeo.features){const sel=new Set([...s.alcaldias].map(clean)).has(clean(f.properties.NOMGEO));f.properties.selected=sel?1:0;f.properties.alcHeight=sel?(alcCount===1?2800:1450):60;f.properties.territoryMode=territoryMode}
+  for(const f of alcGeo.features){const sel=new Set([...s.alcaldias].map(clean)).has(clean(f.properties.NOMGEO));f.properties.selected=sel?1:0;f.properties.alcHeight=sel?(alcCount===1?5200:3200):0;f.properties.territoryMode=territoryMode}
   for(const f of cpGeo.features){const scope=featureInSelectedAlcs(f),has=Number(f.properties.inmuebles||0)>0;f.properties.inScope=scope?1:0;f.properties.hasInm=has?1:0;f.properties.statusSelected=scope&&((cpMode==='with'&&has)||(cpMode==='without'&&!has))?1:0;f.properties.selected=s.cp&&String(f.properties.cp)===String(s.cp)?1:0}
   for(const f of colGeo.features){const scope=featureInSelectedAlcs(f),has=Number(f.properties.inmuebles||0)>0;f.properties.inScope=scope?1:0;f.properties.hasInm=has?1:0;f.properties.statusSelected=scope&&((colMode==='with'&&has)||(colMode==='without'&&!has))?1:0;f.properties.selected=s.col&&String(f.properties.cvegeo)===String(s.col)?1:0}
-  if(map.getSource('alcaldias'))map.getSource('alcaldias').setData(alcGeo);if(map.getSource('cp'))map.getSource('cp').setData(cpGeo);if(map.getSource('colonias'))map.getSource('colonias').setData(colGeo);
+  if(map.getSource('alcaldias'))map.getSource('alcaldias').setData(alcGeo);if(map.getSource('cp'))map.getSource('cp').setData(cpGeo);if(map.getSource('colonias'))map.getSource('colonias').setData(colGeo);map.triggerRepaint();
 }
 
 function activateAlcaldias3D(){
   clearAlcLabels();activeTerritoryType=null;showTerritoryLayers();updateSelectedProperties();const names=selectedAlcaldias();
   if(!names.size){fitGeo(alcGeo,{pitch:0,bearing:0});return}
   const nc=new Set([...names].map(clean)),fs=alcGeo.features.filter(f=>nc.has(clean(f.properties.NOMGEO)));
-  if(names.size===1){fitGeo({type:'FeatureCollection',features:fs},{pitch:58,bearing:-18,maxZoom:12.4});setTimeout(()=>fs.forEach(showAlcaldiaLabel),650)}
-  else{fitGeo({type:'FeatureCollection',features:fs},{pitch:46,bearing:0,maxZoom:11.2});setTimeout(()=>fs.forEach(f=>showAlcaldiaLabel(f,true)),650)}
+  if(names.size===1){fitGeo({type:'FeatureCollection',features:fs},{pitch:66,bearing:-22,maxZoom:12.6});setTimeout(()=>fs.forEach(showAlcaldiaLabel),650)}
+  else{fitGeo({type:'FeatureCollection',features:fs},{pitch:58,bearing:-8,maxZoom:11.5});setTimeout(()=>fs.forEach(f=>showAlcaldiaLabel(f,true)),650)}
 }
 function activateTerritoryPartition(type){
   clearAlcLabels();activeTerritoryType=type;updateSelectedProperties();showTerritoryLayers();renderLegend();
-  const fs=territoryAllInScope(type);if(fs.length)fitGeo({type:'FeatureCollection',features:fs},{pitch:type==='cp'?55:57,bearing:-12,maxZoom:selectedAlcaldias().size>1?11.7:13});
+  const fs=territoryAllInScope(type);if(fs.length)fitGeo({type:'FeatureCollection',features:fs},{pitch:type==='cp'?64:65,bearing:-18,maxZoom:selectedAlcaldias().size>1?12:13.4});
 }
 function activateTerritory3D(type,value){
   clearAlcLabels();activeTerritoryType=type;updateSelectedProperties();showTerritoryLayers();renderLegend();if(!value){activateTerritoryPartition(type);return}
-  const feature=type==='cp'?cpGeo.features.find(f=>String(f.properties.cp)===String(value)):colGeo.features.find(f=>String(f.properties.cvegeo)===String(value));if(feature)fitFeature(feature,{pitch:type==='cp'?60:62,bearing:-20,maxZoom:type==='cp'?15:16})
+  const feature=type==='cp'?cpGeo.features.find(f=>String(f.properties.cp)===String(value)):colGeo.features.find(f=>String(f.properties.cvegeo)===String(value));if(feature)fitFeature(feature,{pitch:type==='cp'?68:69,bearing:-24,maxZoom:type==='cp'?15:16})
 }
 function showAlcaldiaLabel(f,compact=false){const p=f.properties,center=featureCenter(f),html=`<div class="alc-label-card"><b>${esc(p.NOMGEO)}</b><span><strong>${fmt(p.inmuebles)}</strong> inmuebles · <strong>${fmt(p.cct)}</strong> CCT</span>${compact?'':`<span>${fmt(p.publicas)} públicas · ${fmt(p.privadas)} privadas</span>${p.topniv?`<span>${esc(p.topniv)}</span>`:''}`}</div>`;const el=document.createElement('div');el.className='alc-stat-label';el.innerHTML=html;alcLabels.push(new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat(center).addTo(map))}
 function clearAlcLabels(){alcLabels.forEach(m=>m.remove());alcLabels=[]}
