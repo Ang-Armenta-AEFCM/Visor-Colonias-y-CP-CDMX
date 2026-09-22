@@ -179,7 +179,7 @@ function bind(){
 
 function resetFilters(){
   document.querySelectorAll('#alcList input').forEach(x=>x.checked=false);['fNivel','fCP','fColonia','searchCCT','searchName','searchCP','searchColonia'].forEach(id=>$(id).value='');$('fCPStatus').value='with';$('fColStatus').value='with';
-  document.querySelectorAll('input[name=soste]').forEach(x=>x.checked=true);$('showCP').checked=false;$('showColonias').checked=false;$('showSchools').checked=false;$('showInmuebles').checked=true;$('showTrayectorias').checked=false;$('showIMV').checked=false;$('imvCategory').value='';$('showSocio').checked=false;$('socioTheme').value='rezago';populateSocioVariables();activeTerritoryType=null;view3DEnabled=true;clearAlcLabels();refreshTerritoryMenus('cp');refreshTerritoryMenus('colonia');render();showTerritoryLayers();showIMVLayer();updateSocioLayer();hideOrbitControl();fitGeo(alcGeo,{pitch:0,bearing:0});
+  document.querySelectorAll('input[name=soste]').forEach(x=>x.checked=true);$('showCP').checked=false;$('showColonias').checked=false;$('showSchools').checked=true;$('showInmuebles').checked=true;$('showTrayectorias').checked=false;$('showIMV').checked=false;$('imvCategory').value='';$('showSocio').checked=false;$('socioTheme').value='rezago';populateSocioVariables();activeTerritoryType=null;view3DEnabled=true;clearAlcLabels();refreshTerritoryMenus('cp');refreshTerritoryMenus('colonia');render();showTerritoryLayers();showIMVLayer();updateSocioLayer();hideOrbitControl();fitGeo(alcGeo,{pitch:0,bearing:0});
 }
 function switchBasemap(mode){const center=map.getCenter(),zoom=map.getZoom(),pitch=map.getPitch(),bearing=map.getBearing();map.setStyle(mode==='dark'?darkStyle:lightStyle);$('map').classList.toggle('dark-map',mode==='dark');map.once('styledata',()=>{installMapLayers();render();showTerritoryLayers();map.jumpTo({center,zoom,pitch,bearing})})}
 function showTerritoryLayers(){
@@ -198,8 +198,25 @@ function filterOfficialInmuebles(){
   return inmuebles.filter(i=>{if(alcClean.size&&!alcClean.has(clean(i.alcaldia)))return false;if(s.cp&&String(i.cp)!==String(s.cp))return false;if(s.col&&String(i.col)!==String(s.col))return false;if(attributeFilter&&!i.ccts.some(c=>visibleCcts.has(c)))return false;return true})
 }
 function render(){if(!meta)return;visible=filtered();visibleInm=filterOfficialInmuebles();updateKPIs();renderSchools();renderInmueblesMap();renderLegend();updateSelectedProperties();if($('statsView').classList.contains('active'))renderStats();showTerritoryLayers();showIMVLayer();updateSocioLayer()}
-function updateKPIs(){const s=state();$('kTotal').textContent=fmt(new Set(visible.map(x=>x.cct)).size);$('kInm').textContent=fmt(new Set(visible.filter(x=>Number.isFinite(x.lat)&&Number.isFinite(x.lon)).map(x=>x.cct)).size);$('kPub').textContent=fmt(visible.filter(x=>x.sostenimiento==='Público').length);$('kPri').textContent=fmt(visible.filter(x=>x.sostenimiento==='Privada').length);const parts=[];if(s.alcaldias.size)parts.push(`${s.alcaldias.size} alcaldía${s.alcaldias.size>1?'s':''}`);if(s.cp)parts.push('CP '+s.cp);if(s.col&&colGeo){const f=colGeo.features.find(y=>String(y.properties.cvegeo)===String(s.col));if(f)parts.push(f.properties.nom_asen)}if(s.nivel)parts.push(s.nivel);$('scopeNote').textContent=parts.length?'Conteo actual: '+parts.join(' · '):`Base completa: ${fmt(meta.total_cct_unicos)} CCT únicos y ${fmt(inmuebles.length)} inmuebles.`}
-function renderSchools(){if(map.getSource('schools'))map.getSource('schools').setData({type:'FeatureCollection',features:[]})}
+function updateKPIs(){const s=state();$('kTotal').textContent=fmt(new Set(visible.map(x=>x.cct)).size);$('kInm').textContent=fmt(visibleInm.length);$('kPub').textContent=fmt(visible.filter(x=>x.sostenimiento==='Público').length);$('kPri').textContent=fmt(visible.filter(x=>x.sostenimiento==='Privada').length);const parts=[];if(s.alcaldias.size)parts.push(`${s.alcaldias.size} alcaldía${s.alcaldias.size>1?'s':''}`);if(s.cp)parts.push('CP '+s.cp);if(s.col&&colGeo){const f=colGeo.features.find(y=>String(y.properties.cvegeo)===String(s.col));if(f)parts.push(f.properties.nom_asen)}if(s.nivel)parts.push(s.nivel);$('scopeNote').textContent=parts.length?'Conteo actual: '+parts.join(' · '):`Base completa: ${fmt(meta.total_cct_unicos)} CCT únicos y ${fmt(inmuebles.length)} inmuebles.`}
+function renderSchools(){
+ if(!map.getSource('schools'))return;
+ if(!$('showSchools')?.checked){map.getSource('schools').setData({type:'FeatureCollection',features:[]});return}
+ const valid=visible.filter(x=>Number.isFinite(x.lat)&&Number.isFinite(x.lon));
+ const groups=new Map();
+ valid.forEach(x=>{const k=x.lon.toFixed(7)+'|'+x.lat.toFixed(7);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(x)});
+ const mode=$('colorMode').value, field=$('trayectoriaField').value, tray=$('showTrayectorias').checked&&indicadoresReady;
+ const features=valid.map(x=>{
+   const key=x.lon.toFixed(7)+'|'+x.lat.toFixed(7), peers=groups.get(key), pos=peers.indexOf(x);
+   const angle=peers.length>1?2*Math.PI*pos/peers.length:0;
+   const radius=peers.length>1?0.00011:0;
+   const v=tray?indicadores?.[x.cct]?.[field]:null;
+   const color=tray?trajectoryColor(Number.isFinite(v)?v:null,field):colorFor(x,mode);
+   return {type:'Feature',geometry:{type:'Point',coordinates:[x.lon+Math.cos(angle)*radius,x.lat+Math.sin(angle)*radius]},properties:{idx:schools.indexOf(x),cct:x.cct,color}};
+ });
+ map.getSource('schools').setData({type:'FeatureCollection',features});
+ if(map.getLayer('schools')){try{map.moveLayer('schools')}catch(e){}}
+}
 function renderInmueblesMap(){
  if(!map.getSource('inmuebles'))return;
  const groups=new Map(),shown=new Set(visible.map(x=>x.cct)),items=visibleInm.filter(i=>Number.isFinite(i.lat)&&Number.isFinite(i.lon));
