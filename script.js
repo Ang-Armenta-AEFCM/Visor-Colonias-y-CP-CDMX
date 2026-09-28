@@ -120,8 +120,12 @@ function buildControls(){
   const alcs=[...new Set(schools.map(x=>x.alcaldia).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
   $('alcList').innerHTML=alcs.map(a=>`<label><input type="checkbox" value="${esc(a)}"> ${esc(a)}</label>`).join('');
   fill($('fNivel'),[...new Set(schools.map(x=>x.nivel).filter(Boolean))].sort());
+  const categories=['Público','Privado','Autónomo','Otros Organismos'];
+  const present=new Set(schools.map(x=>x.sostenimiento_detalle).filter(Boolean));
+  $('sosteList').innerHTML=categories.filter(c=>present.has(c)).map(c=>`<label><input type="checkbox" name="soste" value="${esc(c)}" checked> ${esc(c)}</label>`).join('');
   enableTerritoryControls(false);
   populateSocioVariables();
+  updateSocioExplanation();
   $('cpStatusSummary').textContent='Cargando en segundo plano…';$('colStatusSummary').textContent='Cargando en segundo plano…';
 }
 function fill(sel,arr){arr.forEach(v=>sel.add(new Option(v,v)))}
@@ -153,8 +157,8 @@ function bind(){
   $('showIMV').onchange=async()=>{if($('showIMV').checked)await ensureIMV();showIMVLayer();renderLegend()};
   $('imvCategory').onchange=()=>showIMVLayer();
   $('showSocio').onchange=async()=>{if($('showSocio').checked)await ensureSocio();updateSocioLayer();renderLegend()};
-  $('socioTheme').onchange=()=>{populateSocioVariables();updateSocioLayer();renderLegend()};
-  $('socioVariable').onchange=()=>{updateSocioLayer();renderLegend()};
+  $('socioTheme').onchange=()=>{populateSocioVariables();updateSocioExplanation();updateSocioLayer();renderLegend()};
+  $('socioVariable').onchange=()=>{updateSocioExplanation();updateSocioLayer();renderLegend()};
   $('alcList').onchange=()=>{refreshTerritoryMenus('cp');refreshTerritoryMenus('colonia');render();activeTerritoryType?activateTerritoryPartition(activeTerritoryType):activateAlcaldias3D()};
   $('allAlc').onclick=()=>{document.querySelectorAll('#alcList input').forEach(x=>x.checked=true);refreshTerritoryMenus('cp');refreshTerritoryMenus('colonia');render();activeTerritoryType?activateTerritoryPartition(activeTerritoryType):activateAlcaldias3D()};
   $('noneAlc').onclick=()=>{document.querySelectorAll('#alcList input').forEach(x=>x.checked=false);refreshTerritoryMenus('cp');refreshTerritoryMenus('colonia');render();activeTerritoryType?activateTerritoryPartition(activeTerritoryType):activateAlcaldias3D()};
@@ -162,7 +166,9 @@ function bind(){
   $('fColStatus').onchange=()=>{activeTerritoryType='colonia';$('fColonia').value='';refreshTerritoryMenus('colonia');render();activateTerritoryPartition('colonia')};
   $('fCP').onchange=()=>{activeTerritoryType='cp';render();$('fCP').value?activateTerritory3D('cp',$('fCP').value):activateTerritoryPartition('cp');refreshTerritoryMenus('cp')};
   $('fColonia').onchange=()=>{activeTerritoryType='colonia';render();$('fColonia').value?activateTerritory3D('colonia',$('fColonia').value):activateTerritoryPartition('colonia');refreshTerritoryMenus('colonia')};
-  document.querySelectorAll('input[name=soste]').forEach(x=>x.onchange=render);
+  $('sosteList').onchange=render;
+  $('allSoste').onclick=()=>{document.querySelectorAll('input[name=soste]').forEach(x=>x.checked=true);render()};
+  $('noneSoste').onclick=()=>{document.querySelectorAll('input[name=soste]').forEach(x=>x.checked=false);render()};
   $('showCP').onchange=()=>showTerritoryLayers();$('showColonias').onchange=()=>showTerritoryLayers();$('showSchools').onchange=render;$('showInmuebles').onchange=render;
   $('clearFilters').onclick=resetFilters;$('statsReset').onclick=resetFilters;
   $('searchCCT').onchange=searchZoom;$('searchCCT').onkeydown=e=>{if(e.key==='Enter')searchZoom()};$('searchName').onchange=searchZoom;$('searchName').onkeydown=e=>{if(e.key==='Enter')searchZoom()};
@@ -179,7 +185,7 @@ function bind(){
 
 function resetFilters(){
   document.querySelectorAll('#alcList input').forEach(x=>x.checked=false);['fNivel','fCP','fColonia','searchCCT','searchName','searchCP','searchColonia'].forEach(id=>$(id).value='');$('fCPStatus').value='with';$('fColStatus').value='with';
-  document.querySelectorAll('input[name=soste]').forEach(x=>x.checked=true);$('showCP').checked=false;$('showColonias').checked=false;$('showSchools').checked=true;$('showInmuebles').checked=true;$('showTrayectorias').checked=false;$('showIMV').checked=false;$('imvCategory').value='';$('showSocio').checked=false;$('socioTheme').value='rezago';populateSocioVariables();activeTerritoryType=null;view3DEnabled=true;clearAlcLabels();refreshTerritoryMenus('cp');refreshTerritoryMenus('colonia');render();showTerritoryLayers();showIMVLayer();updateSocioLayer();hideOrbitControl();fitGeo(alcGeo,{pitch:0,bearing:0});
+  document.querySelectorAll('input[name=soste]').forEach(x=>x.checked=true);$('showCP').checked=false;$('showColonias').checked=false;$('showSchools').checked=false;$('showInmuebles').checked=true;$('showTrayectorias').checked=false;$('showIMV').checked=false;$('imvCategory').value='';$('showSocio').checked=false;$('socioTheme').value='rezago';populateSocioVariables();updateSocioExplanation();activeTerritoryType=null;view3DEnabled=true;clearAlcLabels();refreshTerritoryMenus('cp');refreshTerritoryMenus('colonia');render();showTerritoryLayers();showIMVLayer();updateSocioLayer();hideOrbitControl();fitGeo(alcGeo,{pitch:0,bearing:0});
 }
 function switchBasemap(mode){const center=map.getCenter(),zoom=map.getZoom(),pitch=map.getPitch(),bearing=map.getBearing();map.setStyle(mode==='dark'?darkStyle:lightStyle);$('map').classList.toggle('dark-map',mode==='dark');map.once('styledata',()=>{installMapLayers();render();showTerritoryLayers();map.jumpTo({center,zoom,pitch,bearing})})}
 function showTerritoryLayers(){
@@ -192,31 +198,14 @@ function showTerritoryLayers(){
 }
 
 function state(){return {alcaldias:selectedAlcaldias(),nivel:$('fNivel').value,cp:$('fCP').value,col:$('fColonia').value,soste:new Set([...document.querySelectorAll('input[name=soste]:checked')].map(x=>x.value))}}
-function filtered(){const s=state();return schools.filter(x=>{if(s.alcaldias.size&&!s.alcaldias.has(x.alcaldia))return false;if(s.nivel&&x.nivel!==s.nivel)return false;if(s.cp&&x.cp!==s.cp)return false;if(s.col&&x.cvegeo_asentamiento!==s.col)return false;if(!s.soste.has(x.sostenimiento))return false;return true})}
+function filtered(){const s=state();return schools.filter(x=>{if(s.alcaldias.size&&!s.alcaldias.has(x.alcaldia))return false;if(s.nivel&&x.nivel!==s.nivel)return false;if(s.cp&&x.cp!==s.cp)return false;if(s.col&&x.cvegeo_asentamiento!==s.col)return false;if(!s.soste.has(x.sostenimiento_detalle))return false;return true})}
 function filterOfficialInmuebles(){
-  const s=state(),visibleCcts=new Set(visible.map(x=>x.cct)),attributeFilter=!!s.nivel||s.soste.size<2,alcClean=new Set([...s.alcaldias].map(clean));
+  const s=state(),visibleCcts=new Set(visible.map(x=>x.cct)),attributeFilter=!!s.nivel||s.soste.size<document.querySelectorAll('input[name=soste]').length,alcClean=new Set([...s.alcaldias].map(clean));
   return inmuebles.filter(i=>{if(alcClean.size&&!alcClean.has(clean(i.alcaldia)))return false;if(s.cp&&String(i.cp)!==String(s.cp))return false;if(s.col&&String(i.col)!==String(s.col))return false;if(attributeFilter&&!i.ccts.some(c=>visibleCcts.has(c)))return false;return true})
 }
 function render(){if(!meta)return;visible=filtered();visibleInm=filterOfficialInmuebles();updateKPIs();renderSchools();renderInmueblesMap();renderLegend();updateSelectedProperties();if($('statsView').classList.contains('active'))renderStats();showTerritoryLayers();showIMVLayer();updateSocioLayer()}
-function updateKPIs(){const s=state();$('kTotal').textContent=fmt(new Set(visible.map(x=>x.cct)).size);$('kInm').textContent=fmt(visibleInm.length);$('kPub').textContent=fmt(visible.filter(x=>x.sostenimiento==='Público').length);$('kPri').textContent=fmt(visible.filter(x=>x.sostenimiento==='Privada').length);const parts=[];if(s.alcaldias.size)parts.push(`${s.alcaldias.size} alcaldía${s.alcaldias.size>1?'s':''}`);if(s.cp)parts.push('CP '+s.cp);if(s.col&&colGeo){const f=colGeo.features.find(y=>String(y.properties.cvegeo)===String(s.col));if(f)parts.push(f.properties.nom_asen)}if(s.nivel)parts.push(s.nivel);$('scopeNote').textContent=parts.length?'Conteo actual: '+parts.join(' · '):`Base completa: ${fmt(meta.total_cct_unicos)} CCT únicos y ${fmt(inmuebles.length)} inmuebles.`}
-function renderSchools(){
- if(!map.getSource('schools'))return;
- if(!$('showSchools')?.checked){map.getSource('schools').setData({type:'FeatureCollection',features:[]});return}
- const valid=visible.filter(x=>Number.isFinite(x.lat)&&Number.isFinite(x.lon));
- const groups=new Map();
- valid.forEach(x=>{const k=x.lon.toFixed(7)+'|'+x.lat.toFixed(7);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(x)});
- const mode=$('colorMode').value, field=$('trayectoriaField').value, tray=$('showTrayectorias').checked&&indicadoresReady;
- const features=valid.map(x=>{
-   const key=x.lon.toFixed(7)+'|'+x.lat.toFixed(7), peers=groups.get(key), pos=peers.indexOf(x);
-   const angle=peers.length>1?2*Math.PI*pos/peers.length:0;
-   const radius=peers.length>1?0.00011:0;
-   const v=tray?indicadores?.[x.cct]?.[field]:null;
-   const color=tray?trajectoryColor(Number.isFinite(v)?v:null,field):colorFor(x,mode);
-   return {type:'Feature',geometry:{type:'Point',coordinates:[x.lon+Math.cos(angle)*radius,x.lat+Math.sin(angle)*radius]},properties:{idx:schools.indexOf(x),cct:x.cct,color}};
- });
- map.getSource('schools').setData({type:'FeatureCollection',features});
- if(map.getLayer('schools')){try{map.moveLayer('schools')}catch(e){}}
-}
+function updateKPIs(){const s=state();$('kTotal').textContent=fmt(new Set(visible.map(x=>x.cct)).size);$('kInm').textContent=fmt(new Set(visible.filter(x=>Number.isFinite(x.lat)&&Number.isFinite(x.lon)).map(x=>x.cct)).size);$('kPub').textContent=fmt(visible.filter(x=>x.sostenimiento==='Público').length);$('kPri').textContent=fmt(visible.filter(x=>x.sostenimiento==='Privada').length);const parts=[];if(s.alcaldias.size)parts.push(`${s.alcaldias.size} alcaldía${s.alcaldias.size>1?'s':''}`);if(s.cp)parts.push('CP '+s.cp);if(s.col&&colGeo){const f=colGeo.features.find(y=>String(y.properties.cvegeo)===String(s.col));if(f)parts.push(f.properties.nom_asen)}if(s.nivel)parts.push(s.nivel);$('scopeNote').textContent=parts.length?'Conteo actual: '+parts.join(' · '):`Base completa: ${fmt(meta.total_cct_unicos)} CCT únicos y ${fmt(inmuebles.length)} inmuebles.`}
+function renderSchools(){if(map.getSource('schools'))map.getSource('schools').setData({type:'FeatureCollection',features:[]})}
 function renderInmueblesMap(){
  if(!map.getSource('inmuebles'))return;
  const groups=new Map(),shown=new Set(visible.map(x=>x.cct)),items=visibleInm.filter(i=>Number.isFinite(i.lat)&&Number.isFinite(i.lon));
@@ -361,6 +350,14 @@ function currentSocioDef(){
   const vars=socioMeta?.themes?.[theme]?.variables||[];
   return vars.find(v=>v.key===key)||vars[0]||{key,label:key||'',type:'number'};
 }
+function updateSocioExplanation(){
+  const el=$('socioExplanation');if(!el)return;
+  const def=currentSocioDef(),theme=$('socioTheme')?.value||'rezago';
+  const generic={rezago:'Fuente: CONEVAL, Grado de Rezago Social por AGEB urbana 2020.',discapacidad:'Fuente: INEGI, Censo de Población y Vivienda 2020.',lectoescritura:'Fuente: INEGI, Censo de Población y Vivienda 2020.',hacinamiento:'Fuentes: CONEVAL e INEGI, año de referencia 2020.'};
+  const fallback={grado_rezago:'Categoría de rezago social por AGEB, no un porcentaje.',disc_total_pct:'Porcentaje de personas con discapacidad en cada AGEB.',no_lee_8_14_pct:'Porcentaje de población de 8–14 años que no sabe leer ni escribir.',viv_hac_coneval_pct:'Porcentaje de viviendas con más de 2.5 ocupantes por cuarto; no de personas.'};
+  const unit=def.type==='category'?'Categorías oficiales (muy bajo a muy alto).':def.type==='percent'?'Unidad: porcentaje de la población o viviendas indicadas.':'Unidad: promedio, no porcentaje.';
+  el.innerHTML=`<b>${esc(def.label)}</b><p>${esc(def.description||fallback[def.key]||'Selecciona un indicador para ver su definición.')}</p><p>${esc(unit)}</p><p class="hint">${esc(generic[theme])} Los valores nulos aparecen como “Sin dato”, nunca como 0.</p>`;
+}
 async function ensureSocio(){
   if(socioReady||socioLoading)return;
   socioLoading=true;$('socioStatus').textContent='Cargando AGEB e indicadores…';
@@ -370,7 +367,7 @@ async function ensureSocio(){
       jsonFetch('data/ageb_indicadores.json'),
       jsonFetch('data/ageb_socio_meta.json')
     ]);
-    socioReady=true;populateSocioVariables();installSocioMapLayer();
+    socioReady=true;populateSocioVariables();updateSocioExplanation();installSocioMapLayer();
     $('socioStatus').textContent=`${fmt(socioGeo.features.length)} AGEB · datos ${socioMeta.anio||2020}.`;
   }catch(e){$('socioStatus').textContent='No se pudo cargar la capa socioeconómica.';console.error(e)}
   finally{socioLoading=false}

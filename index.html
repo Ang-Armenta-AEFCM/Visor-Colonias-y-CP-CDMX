@@ -7,12 +7,19 @@
 <link rel="stylesheet" href="style.css?v=13"></head><body>
 <header class="topbar"><div><span class="eyebrow">Centros educativos · Ciudad de México</span><h1>Visor Territorial de Planteles</h1><p>Explora CCT, inmuebles, trayectorias escolares, marginalidad y violencia, códigos postales, colonias y asentamientos humanos sin mezclar unidades de conteo.</p></div><nav class="mainnav"><button class="navtab active" data-view="mapView">Mapa</button><button class="navtab" data-view="statsView">Estadísticas</button></nav><div class="header-actions"><button id="fitAll">Ver toda CDMX</button><button id="fullscreen">Pantalla completa</button></div></header>
 <section id="mapView" class="view active"><main class="layout"><aside class="sidebar" id="sidebar">
-<section class="panel"><h2>Resumen visible</h2><div class="kpis"><div><strong id="kTotal">0</strong><span>CCT totales</span><small>Públicos y privados</small></div><div><strong id="kInm">0</strong><span>Inmuebles totales</span><small>Públicos y privados</small></div><div><strong id="kPub">0</strong><span>Públicas</span></div><div><strong id="kPri">0</strong><span>Privadas</span></div></div><p id="scopeNote" class="hint"></p></section>
+<section class="panel"><h2>Resumen visible</h2><div class="kpis"><div><strong id="kTotal">0</strong><span>CCT totales</span><small>Públicos y privados</small></div><div><strong id="kInm">0</strong><span>CCT con coordenadas</span><small>Públicos y privados</small></div><div><strong id="kPub">0</strong><span>Públicas</span></div><div><strong id="kPri">0</strong><span>Privadas</span></div></div><p id="scopeNote" class="hint"></p></section>
 <section class="panel"><h2>Buscar plantel</h2><label>CCT</label><input id="searchCCT" list="cctList" placeholder="09DPR..."><datalist id="cctList"></datalist><label>Nombre</label><input id="searchName" list="nameList" placeholder="Nombre del plantel"><datalist id="nameList"></datalist></section>
-<section class="panel"><h2>Filtros</h2><label>Alcaldías <span class="mini-note">(puedes elegir varias)</span></label><div class="row-actions"><button id="allAlc" class="mini" type="button">Todas</button><button id="noneAlc" class="mini secondary" type="button">Ninguna</button></div><div id="alcList" class="alc-multilist"></div><label>Nivel educativo</label><select id="fNivel"><option value="">Todos</option></select><label>Sostenimiento</label><div class="checkrow"><label><input type="checkbox" name="soste" value="Público" checked> Públicas</label><label><input type="checkbox" name="soste" value="Privada" checked> Privadas</label></div><button id="clearFilters" class="secondary">Limpiar filtros</button></section>
-<section class="panel territory-panel"><div class="panel-title-row"><h2>Territorio · 3D</h2><span class="badge3d">3D</span></div><p class="hint">Al elegir alcaldía, CP o colonia el territorio seleccionado se eleva automáticamente.</p>
+<section class="panel"><h2>Filtros</h2>
+<label>Nivel educativo</label><select id="fNivel"><option value="">Todos</option></select>
+<label>Sostenimiento <span class="mini-note">(puedes elegir varios)</span></label>
+<div class="row-actions"><button id="allSoste" class="mini" type="button">Todos</button><button id="noneSoste" class="mini secondary" type="button">Ninguno</button></div>
+<div id="sosteList" class="soste-multilist"></div>
+<label>Alcaldías <span class="mini-note">(puedes elegir varias)</span></label><div class="row-actions"><button id="allAlc" class="mini" type="button">Todas</button><button id="noneAlc" class="mini secondary" type="button">Ninguna</button></div><div id="alcList" class="alc-multilist"></div>
 <label>Código postal</label><select id="fCPStatus"><option value="with">Con inmuebles</option><option value="without">Sin inmuebles</option></select><div id="cpStatusSummary" class="territory-summary"></div><div id="cpMenuList" class="territory-result-list"></div><select id="fCP"><option value="">Todos</option></select><div class="territory-actions"><input id="searchCP" list="cpSearchList" placeholder="Buscar CP…"><datalist id="cpSearchList"></datalist><button id="downloadCP" class="mini secondary" type="button">Descargar lista</button><button id="clearCP" class="mini secondary" type="button">Limpiar CP</button></div>
 <label>Colonia / asentamiento</label><select id="fColStatus"><option value="with">Con inmuebles</option><option value="without">Sin inmuebles</option></select><div id="colStatusSummary" class="territory-summary"></div><div id="colMenuList" class="territory-result-list"></div><select id="fColonia"><option value="">Todas</option></select><div class="territory-actions"><input id="searchColonia" list="colSearchList" placeholder="Buscar colonia…"><datalist id="colSearchList"></datalist><button id="downloadCol" class="mini secondary" type="button">Descargar lista</button><button id="clearCol" class="mini secondary" type="button">Limpiar colonia</button></div>
+
+<button id="clearFilters" class="secondary">Limpiar filtros</button></section>
+<section class="panel territory-panel"><div class="panel-title-row"><h2>Territorio · 3D</h2><span class="badge3d">3D</span></div><p class="hint">Al elegir alcaldía, CP o colonia el territorio seleccionado se eleva automáticamente.</p>
 <div class="checkstack"><label><input type="checkbox" id="showCP"> Mostrar todos los polígonos de CP</label><label><input type="checkbox" id="showColonias"> Mostrar todas las colonias/asentamientos</label></div></section>
 <section class="panel thematic-panel"><h2>Capas temáticas</h2>
 <label class="toggle"><input type="checkbox" id="showTrayectorias"> Trayectorias escolares</label>
@@ -28,11 +35,13 @@
 <label>Tema</label><select id="socioTheme">
 <option value="rezago">Rezago social</option>
 <option value="discapacidad">Discapacidad</option>
-<option value="lectoescritura">Lectoescritura 8–14</option>
+<option value="lectoescritura">No sabe leer/escribir (8–14)</option>
 <option value="hacinamiento">Hacinamiento</option>
 </select>
 <label>Indicador</label><select id="socioVariable"></select>
 <div id="socioStatus" class="territory-summary">Se carga al activarse.</div>
+<details class="socio-guide" open><summary>¿Qué significa y cómo se representa?</summary><div id="socioExplanation" class="socio-explanation" aria-live="polite"></div>
+<p class="hint"><strong>Lectura del mapa:</strong> cada polígono representa un AGEB, no un plantel ni un inmueble. Los indicadores numéricos se dividen en cinco grupos por quintiles de los AGEB de las alcaldías seleccionadas. Los colores claros representan valores menores y los oscuros, mayores; eso no implica automáticamente una evaluación de la zona. Gris: sin dato. Haz clic en un AGEB para ver su valor exacto.</p></details>
 <p class="hint">AGEB 2020. Los datos no disponibles se muestran como “Sin dato” y nunca se interpretan como cero.</p>
 </section>
 </aside><button id="menuBtn" class="menu-btn">☰</button>

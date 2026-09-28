@@ -22,3 +22,11 @@
 
 /* v13 variables socioeconómicas AGEB */
 .socio-panel select{margin-bottom:4px}.socio-value{font-weight:850;color:#174a72}.socio-popup{min-width:230px}.socio-popup .socio-head{font-size:13px;font-weight:850;margin-bottom:5px}.socio-popup .socio-main{font-size:18px;font-weight:900;color:#174a72;margin:5px 0}.socio-popup .socio-grid{display:grid;grid-template-columns:1fr auto;gap:3px 10px;margin-top:7px;font-size:11px}.socio-popup .socio-grid span:nth-child(odd){color:#657686}.socio-popup small{display:block;margin-top:7px;color:#718596}.dark-map .socio-popup .socio-main{color:#cfe6f5}
+
+/* Orden del panel de consulta y guía socioeconómica */
+.soste-multilist{max-height:145px;overflow-y:auto;border:1px solid #dbe4ea;border-radius:9px;background:#fbfdfe;padding:5px 7px;margin:5px 0 10px}
+.soste-multilist label{display:flex!important;align-items:center;gap:7px;margin:4px 0!important;font-size:11px!important;font-weight:650!important}
+.socio-guide{margin:11px 0 4px;border:1px solid #d7e3eb;border-radius:9px;background:#f7fafc;padding:10px}
+.socio-guide summary{font-weight:800;font-size:12px;color:#214966;cursor:pointer}
+.socio-explanation{font-size:11px;color:#334e61;line-height:1.5;margin-top:9px}
+.socio-explanation p{margin:6px 0}
