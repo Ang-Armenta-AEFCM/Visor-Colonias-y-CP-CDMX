@@ -4,11 +4,11 @@
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
-<link rel="stylesheet" href="style.css?v=13"></head><body>
+<link rel="stylesheet" href="style.css?v=16"></head><body>
 <header class="topbar"><div><span class="eyebrow">Centros educativos · Ciudad de México</span><h1>Visor Territorial de Planteles</h1><p>Explora CCT, inmuebles, trayectorias escolares, marginalidad y violencia, códigos postales, colonias y asentamientos humanos sin mezclar unidades de conteo.</p></div><nav class="mainnav"><button class="navtab active" data-view="mapView">Mapa</button><button class="navtab" data-view="statsView">Estadísticas</button></nav><div class="header-actions"><button id="fitAll">Ver toda CDMX</button><button id="fullscreen">Pantalla completa</button></div></header>
 <section id="mapView" class="view active"><main class="layout"><aside class="sidebar" id="sidebar">
-<section class="panel"><h2>Resumen visible</h2><div class="kpis"><div><strong id="kTotal">0</strong><span>CCT totales</span><small>Públicos y privados</small></div><div><strong id="kInm">0</strong><span>CCT con coordenadas</span><small>Públicos y privados</small></div><div><strong id="kPub">0</strong><span>Públicas</span></div><div><strong id="kPri">0</strong><span>Privadas</span></div></div><p id="scopeNote" class="hint"></p></section>
-<section class="panel"><h2>Buscar plantel</h2><label>CCT</label><input id="searchCCT" list="cctList" placeholder="09DPR..."><datalist id="cctList"></datalist><label>Nombre</label><input id="searchName" list="nameList" placeholder="Nombre del plantel"><datalist id="nameList"></datalist></section>
+<section class="panel summary-panel"><h2>Resumen visible</h2><div class="kpis"><div><strong id="kTotal">0</strong><span>CCT totales</span><small>Públicos y privados</small></div><div><strong id="kInm">0</strong><span>Inmuebles totales</span><small>Públicos y privados</small></div><div><strong id="kPub">0</strong><span>CCT públicos</span></div><div><strong id="kPri">0</strong><span>CCT privados</span></div></div><p id="scopeNote" class="hint"></p></section>
+<section class="panel"><h2>Buscar plantel</h2><label>CCT</label><input id="searchCCT" list="cctList" placeholder="09DPR..."><datalist id="cctList"></datalist><label for="searchName">Búsqueda por nombre:</label><input id="searchName" list="nameList" placeholder="Nombre del plantel"><datalist id="nameList"></datalist></section>
 <section class="panel"><h2>Filtros</h2>
 <label>Nivel educativo</label><select id="fNivel"><option value="">Todos</option></select>
 <label>Sostenimiento <span class="mini-note">(puedes elegir varios)</span></label>
@@ -19,8 +19,6 @@
 <label>Colonia / asentamiento</label><select id="fColStatus"><option value="with">Con inmuebles</option><option value="without">Sin inmuebles</option></select><div id="colStatusSummary" class="territory-summary"></div><div id="colMenuList" class="territory-result-list"></div><select id="fColonia"><option value="">Todas</option></select><div class="territory-actions"><input id="searchColonia" list="colSearchList" placeholder="Buscar colonia…"><datalist id="colSearchList"></datalist><button id="downloadCol" class="mini secondary" type="button">Descargar lista</button><button id="clearCol" class="mini secondary" type="button">Limpiar colonia</button></div>
 
 <button id="clearFilters" class="secondary">Limpiar filtros</button></section>
-<section class="panel territory-panel"><div class="panel-title-row"><h2>Territorio · 3D</h2><span class="badge3d">3D</span></div><p class="hint">Al elegir alcaldía, CP o colonia el territorio seleccionado se eleva automáticamente.</p>
-<div class="checkstack"><label><input type="checkbox" id="showCP"> Mostrar todos los polígonos de CP</label><label><input type="checkbox" id="showColonias"> Mostrar todas las colonias/asentamientos</label></div></section>
 <section class="panel thematic-panel"><h2>Capas temáticas</h2>
 <label class="toggle"><input type="checkbox" id="showTrayectorias"> Trayectorias escolares</label>
 <select id="trayectoriaField"><option value="abandono_preescolar">Abandono · Preescolar</option><option value="abandono_primaria">Abandono · Primaria</option><option value="abandono_secundaria" selected>Abandono · Secundaria</option><option value="no_promovidos_primaria">No promovidos · Primaria</option><option value="no_promovidos_secundaria">No promovidos · Secundaria</option></select>
@@ -44,6 +42,8 @@
 <p class="hint"><strong>Lectura del mapa:</strong> cada polígono representa un AGEB, no un plantel ni un inmueble. Los indicadores numéricos se dividen en cinco grupos por quintiles de los AGEB de las alcaldías seleccionadas. Los colores claros representan valores menores y los oscuros, mayores; eso no implica automáticamente una evaluación de la zona. Gris: sin dato. Haz clic en un AGEB para ver su valor exacto.</p></details>
 <p class="hint">AGEB 2020. Los datos no disponibles se muestran como “Sin dato” y nunca se interpretan como cero.</p>
 </section>
+<section class="panel territory-panel"><div class="panel-title-row"><h2>Capas territoriales</h2></div><p class="hint">Al elegir alcaldía, CP o colonia el territorio seleccionado se eleva automáticamente.</p>
+<div class="checkstack"><label><input type="checkbox" id="showCP"> Mostrar todos los polígonos de CP</label><label><input type="checkbox" id="showColonias"> Mostrar todas las colonias/asentamientos</label></div></section>
 </aside><button id="menuBtn" class="menu-btn">☰</button>
 <section class="maparea"><div id="map"></div><div id="loading" class="loading">Cargando visor…</div>
 <div id="orbitControl" class="orbit-control" aria-label="Control de visualización 3D">
@@ -54,4 +54,4 @@
 <div class="stats-grid"><section class="stat-card"><h3>CP con más CCT</h3><div id="cpTop" class="ranking"></div></section><section class="stat-card"><h3>CP con menos CCT</h3><div id="cpBottom" class="ranking"></div></section><section class="stat-card"><h3>Colonias con más CCT</h3><div id="colTop" class="ranking"></div></section><section class="stat-card"><h3>Colonias con menos CCT</h3><div id="colBottom" class="ranking"></div></section></div>
 <section class="stat-card inmueble-card"><div class="card-title"><div><h3>CCT del territorio seleccionado</h3><p class="hint">Selecciona un CCT para ver su información.</p></div><strong id="inmCount">0</strong></div><div id="inmuebleList" class="inmueble-list"></div></section></div></section>
 <div id="inmModal" class="modal"><div class="modal-card"><button id="closeModal" class="modal-close">×</button><h2 id="inmTitle">Inmueble</h2><div id="inmBody"></div><button id="goMapInm">Ver en mapa</button></div></div>
-<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script><script src="script.js?v=13"></script></body></html>
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script><script src="script.js?v=16"></script></body></html>

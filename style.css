@@ -30,3 +30,15 @@
 .socio-guide summary{font-weight:800;font-size:12px;color:#214966;cursor:pointer}
 .socio-explanation{font-size:11px;color:#334e61;line-height:1.5;margin-top:9px}
 .socio-explanation p{margin:6px 0}
+
+/* v16: resumen compacto; los filtros prioritarios quedan visibles antes de desplazar el panel */
+.summary-panel{padding:9px 11px;margin-bottom:8px}
+.summary-panel h2{font-size:12px;margin:0 0 6px}
+.summary-panel .kpis{gap:5px}
+.summary-panel .kpis div{padding:6px 8px;border-radius:7px;min-width:0}
+.summary-panel .kpis strong{font-size:17px;line-height:1.1}
+.summary-panel .kpis span{font-size:9px;line-height:1.1;display:block;margin-top:3px}
+.summary-panel .kpis small{font-size:8px;margin-top:2px}
+.summary-panel .hint{font-size:10px;line-height:1.25;margin:5px 0 0}
+.soste-multilist{max-height:158px;min-height:65px;overflow:auto}
+.soste-multilist label{cursor:pointer;margin:3px 0!important;padding:3px 2px}

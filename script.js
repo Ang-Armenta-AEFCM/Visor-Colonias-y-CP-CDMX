@@ -33,8 +33,8 @@ map.once('load',()=>{mapReady=true;tryInitCoreMap()});
     buildControls();if(!controlsBound){bind();controlsBound=true}
     coreReady=true;tryInitCoreMap();
     // El mapa ya puede usarse. Las geometrías territoriales pesadas cargan después, sin bloquear la apertura.
-    idle(loadTerritoryData);
-  }catch(e){$('loading').textContent='Error al cargar los datos';console.error(e)}
+    setTimeout(()=>idle(loadTerritoryData),1500);
+  }catch(e){$('loading').textContent='No se pudo iniciar el visor. Ábrelo desde un servidor (GitHub Pages), no con doble clic al HTML. '+e.message;console.error(e)}
 })();
 
 function tryInitCoreMap(){
@@ -62,8 +62,12 @@ function enableTerritoryControls(enabled){
 }
 function buildSearchLists(){
   if(!schools.length)return;
-  $('cctList').innerHTML=schools.map(x=>`<option value="${esc(x.cct)}">`).join('');
-  $('nameList').innerHTML=[...new Set(schools.map(x=>x.nombre).filter(Boolean))].sort().map(x=>`<option value="${esc(x)}">`).join('');
+  // No generar miles de opciones durante la carga: preparar al primer uso de la búsqueda.
+  const cct=$('searchCCT'),name=$('searchName');
+  let didCct=false,didName=false;
+  const addCct=()=>{if(didCct)return;didCct=true;idle(()=>$('cctList').innerHTML=schools.map(x=>`<option value="${esc(x.cct)}">`).join(''))};
+  const addName=()=>{if(didName)return;didName=true;idle(()=>$('nameList').innerHTML=[...new Set(schools.map(x=>x.nombre).filter(Boolean))].sort().map(x=>`<option value="${esc(x)}">`).join(''))};
+  cct.addEventListener('focus',addCct,{once:true});name.addEventListener('focus',addName,{once:true});
 }
 
 function selectedAlcaldias(){return new Set([...document.querySelectorAll('#alcList input:checked')].map(x=>x.value))}
@@ -204,8 +208,18 @@ function filterOfficialInmuebles(){
   return inmuebles.filter(i=>{if(alcClean.size&&!alcClean.has(clean(i.alcaldia)))return false;if(s.cp&&String(i.cp)!==String(s.cp))return false;if(s.col&&String(i.col)!==String(s.col))return false;if(attributeFilter&&!i.ccts.some(c=>visibleCcts.has(c)))return false;return true})
 }
 function render(){if(!meta)return;visible=filtered();visibleInm=filterOfficialInmuebles();updateKPIs();renderSchools();renderInmueblesMap();renderLegend();updateSelectedProperties();if($('statsView').classList.contains('active'))renderStats();showTerritoryLayers();showIMVLayer();updateSocioLayer()}
-function updateKPIs(){const s=state();$('kTotal').textContent=fmt(new Set(visible.map(x=>x.cct)).size);$('kInm').textContent=fmt(new Set(visible.filter(x=>Number.isFinite(x.lat)&&Number.isFinite(x.lon)).map(x=>x.cct)).size);$('kPub').textContent=fmt(visible.filter(x=>x.sostenimiento==='Público').length);$('kPri').textContent=fmt(visible.filter(x=>x.sostenimiento==='Privada').length);const parts=[];if(s.alcaldias.size)parts.push(`${s.alcaldias.size} alcaldía${s.alcaldias.size>1?'s':''}`);if(s.cp)parts.push('CP '+s.cp);if(s.col&&colGeo){const f=colGeo.features.find(y=>String(y.properties.cvegeo)===String(s.col));if(f)parts.push(f.properties.nom_asen)}if(s.nivel)parts.push(s.nivel);$('scopeNote').textContent=parts.length?'Conteo actual: '+parts.join(' · '):`Base completa: ${fmt(meta.total_cct_unicos)} CCT únicos y ${fmt(inmuebles.length)} inmuebles.`}
-function renderSchools(){if(map.getSource('schools'))map.getSource('schools').setData({type:'FeatureCollection',features:[]})}
+function updateKPIs(){const s=state();$('kTotal').textContent=fmt(new Set(visible.map(x=>x.cct)).size);$('kInm').textContent=fmt(visibleInm.length);$('kPub').textContent=fmt(visible.filter(x=>x.sostenimiento==='Público').length);$('kPri').textContent=fmt(visible.filter(x=>x.sostenimiento==='Privada').length);const parts=[];if(s.alcaldias.size)parts.push(`${s.alcaldias.size} alcaldía${s.alcaldias.size>1?'s':''}`);if(s.cp)parts.push('CP '+s.cp);if(s.col&&colGeo){const f=colGeo.features.find(y=>String(y.properties.cvegeo)===String(s.col));if(f)parts.push(f.properties.nom_asen)}if(s.nivel)parts.push(s.nivel);$('scopeNote').textContent=parts.length?'Conteo actual: '+parts.join(' · '):`Base completa: ${fmt(meta.total_cct_unicos)} CCT únicos y ${fmt(inmuebles.length)} inmuebles.`}
+function renderSchools(){
+  const src=map.getSource('schools');if(!src)return;
+  if(!$('showSchools').checked){src.setData({type:'FeatureCollection',features:[]});return}
+  // Cada CCT mantiene su ficha propia. Si hay CCT sobre la misma coordenada, se desplazan
+  // ligeramente los puntos para permitir hacer clic sin convertirlos en inmuebles.
+  const groups=new Map();for(const x of visible){if(!Number.isFinite(x.lat)||!Number.isFinite(x.lon))continue;const k=x.lon.toFixed(7)+'|'+x.lat.toFixed(7);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(x)}
+  const features=[];for(const peers of groups.values()){const total=peers.length;peers.forEach((x,idx)=>{
+    const a=idx*2*Math.PI/total,dist=total>1?.000065:0;
+    features.push({type:'Feature',geometry:{type:'Point',coordinates:[x.lon+Math.cos(a)*dist,x.lat+Math.sin(a)*dist]},properties:{idx:x._idx,color:colorFor(x,$('colorMode').value)}})
+  })}src.setData({type:'FeatureCollection',features})
+}
 function renderInmueblesMap(){
  if(!map.getSource('inmuebles'))return;
  const groups=new Map(),shown=new Set(visible.map(x=>x.cct)),items=visibleInm.filter(i=>Number.isFinite(i.lat)&&Number.isFinite(i.lon));
@@ -321,7 +335,7 @@ function downloadCSV(name,rows){const csv='\ufeff'+rows.map(r=>r.map(v=>`"${Stri
 
 function switchView(id){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));document.querySelectorAll('.navtab').forEach(b=>b.classList.toggle('active',b.dataset.view===id));if(id==='mapView')setTimeout(()=>map.resize(),50);if(id==='statsView')renderStats()}
 function renderStats(){if(!meta)return;const arr=visibleInm,s=state();$('sInm').textContent=fmt(new Set(visible.filter(x=>Number.isFinite(x.lat)&&Number.isFinite(x.lon)).map(x=>x.cct)).size);$('sCct').textContent=fmt(new Set(visible.map(x=>x.cct)).size);$('sCp').textContent=fmt(new Set(arr.map(x=>x.cp).filter(Boolean)).size);$('sCol').textContent=fmt(new Set(arr.map(x=>x.col).filter(Boolean)).size);const parts=[];if(s.alcaldias.size)parts.push(`${s.alcaldias.size} alcaldía${s.alcaldias.size>1?'s':''}`);if(s.cp)parts.push('CP '+s.cp);if(s.col&&colGeo){const f=colGeo.features.find(y=>String(y.properties.cvegeo)===String(s.col));if(f)parts.push(f.properties.nom_asen)}if(s.nivel)parts.push(s.nivel);$('statsScope').textContent=parts.length?parts.join(' · '):`CDMX completa · ${fmt(inmuebles.length)} inmuebles oficiales`;$('inmCount').textContent=fmt(new Set(visible.map(x=>x.cct)).size);renderRanking('cpTop',countTerritory(arr,'cp'),true,'cp');renderRanking('cpBottom',countTerritory(arr,'cp'),false,'cp');renderRanking('colTop',countTerritory(arr,'col'),true,'col');renderRanking('colBottom',countTerritory(arr,'col'),false,'col');renderInmuebles(arr)}
-function countTerritory(arr,type){const m=new Map();for(const i of arr){const key=type==='cp'?i.cp:i.col;if(!key)continue;const label=type==='cp'?`CP ${i.cp}`:(i.asentamiento||key);if(!m.has(key))m.set(key,{key,label,ccts:new Set()});i.ccts.filter(c=>visible.some(s=>s.cct===c)).forEach(c=>m.get(key).ccts.add(c))}return [...m.values()].map(({key,label,ccts})=>({key,label,count:ccts.size}))}
+function countTerritory(arr,type){const m=new Map(),visibleCcts=new Set(visible.map(s=>s.cct));for(const i of arr){const key=type==='cp'?i.cp:i.col;if(!key)continue;const label=type==='cp'?`CP ${i.cp}`:(i.asentamiento||key);if(!m.has(key))m.set(key,{key,label,ccts:new Set()});i.ccts.filter(c=>visibleCcts.has(c)).forEach(c=>m.get(key).ccts.add(c))}return [...m.values()].map(({key,label,ccts})=>({key,label,count:ccts.size}))}
 function renderRanking(id,data,desc,type){const d=data.sort((a,b)=>desc?b.count-a.count:a.count-b.count).slice(0,10),max=Math.max(1,...d.map(x=>x.count));$(id).innerHTML=d.length?d.map((x,i)=>`<div class="rank-row" data-key="${esc(x.key)}" data-type="${type}"><div class="rank-bar" style="width:${x.count/max*100}%"></div><div class="rank-content"><span class="rank-pos">${i+1}</span><span class="rank-name">${esc(x.label)}</span><span class="rank-value">${fmt(x.count)}</span></div></div>`).join(''):'<p class="hint">Sin datos para el filtro actual.</p>';$(id).querySelectorAll('.rank-row').forEach(r=>r.onclick=()=>selectRank(r.dataset.type,r.dataset.key))}
 function selectRank(type,key){if(!territoryReady){$('statsScope').textContent='Terminando de preparar CP y colonias…';return}if(type==='cp'){$('fCPStatus').value='with';activeTerritoryType='cp';refreshTerritoryMenus('cp');$('fCP').value=key;$('fColonia').value='';$('searchCP').value=key;$('searchColonia').value=''}else{$('fColStatus').value='with';activeTerritoryType='colonia';refreshTerritoryMenus('colonia');$('fColonia').value=key;$('fCP').value='';const f=colGeo.features.find(s=>String(s.properties.cvegeo)===String(key));$('searchColonia').value=f?.properties?.nom_asen||'';$('searchCP').value=''}render();switchView('mapView');setTimeout(()=>activateTerritory3D(type==='cp'?'cp':'colonia',key),80)}
 function renderInmuebles(arr){
