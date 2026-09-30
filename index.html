@@ -8,6 +8,7 @@
 <header class="topbar"><div><span class="eyebrow">Centros educativos · Ciudad de México</span><h1>Visor Territorial de Planteles</h1><p>Explora CCT, inmuebles, trayectorias escolares, marginalidad y violencia, códigos postales, colonias y asentamientos humanos sin mezclar unidades de conteo.</p></div><nav class="mainnav"><button class="navtab active" data-view="mapView">Mapa</button><button class="navtab" data-view="statsView">Estadísticas</button></nav><div class="header-actions"><button id="fitAll">Ver toda CDMX</button><button id="fullscreen">Pantalla completa</button></div></header>
 <section id="mapView" class="view active"><main class="layout"><aside class="sidebar" id="sidebar">
 <section class="panel summary-panel"><h2>Resumen visible</h2><div class="kpis"><div><strong id="kTotal">0</strong><span>CCT totales</span><small>Públicos y privados</small></div><div><strong id="kInm">0</strong><span>Inmuebles totales</span><small>Públicos y privados</small></div><div><strong id="kPub">0</strong><span>CCT públicos</span></div><div><strong id="kPri">0</strong><span>CCT privados</span></div></div><p id="scopeNote" class="hint"></p></section>
+<section class="panel visualization-panel"><h2>Visualización</h2><label>Color de los puntos</label><select id="colorMode"><option value="sostenimiento">Público / privado</option><option value="nivel">Nivel educativo</option></select><label class="toggle"><input type="checkbox" id="showSchools"> Mostrar CCT / planteles</label><label class="toggle"><input type="checkbox" id="showInmuebles" checked> Mostrar inmuebles</label><label>Fondo</label><select id="basemap"><option value="light">Claro</option><option value="dark">Oscuro</option></select></section>
 <section class="panel"><h2>Buscar plantel</h2><label>CCT</label><input id="searchCCT" list="cctList" placeholder="09DPR..."><datalist id="cctList"></datalist><label for="searchName">Búsqueda por nombre:</label><input id="searchName" list="nameList" placeholder="Nombre del plantel"><datalist id="nameList"></datalist></section>
 <section class="panel"><h2>Filtros</h2>
 <label>Nivel educativo</label><select id="fNivel"><option value="">Todos</option></select>
@@ -27,7 +28,7 @@
 <select id="imvCategory"><option value="">Todas las categorías</option><option>Muy baja</option><option>Baja</option><option>Media</option><option>Alta</option><option>Muy alta</option></select>
 <div id="imvStatus" class="territory-summary">Se carga al activarse.</div></section>
 
-<section class="panel"><h2>Visualización</h2><label>Color de los puntos</label><select id="colorMode"><option value="sostenimiento">Público / privado</option><option value="nivel">Nivel educativo</option></select><label class="toggle"><input type="checkbox" id="showSchools"> Mostrar CCT / planteles</label><label class="toggle"><input type="checkbox" id="showInmuebles" checked> Mostrar inmuebles</label><label>Fondo</label><select id="basemap"><option value="light">Claro</option><option value="dark">Oscuro</option></select></section>
+
 <section class="panel socio-panel"><h2>Variables socioeconómicas · AGEB</h2>
 <label class="toggle"><input type="checkbox" id="showSocio"> Mostrar capa socioeconómica</label>
 <label>Tema</label><select id="socioTheme">

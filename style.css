@@ -42,3 +42,10 @@
 .summary-panel .hint{font-size:10px;line-height:1.25;margin:5px 0 0}
 .soste-multilist{max-height:158px;min-height:65px;overflow:auto}
 .soste-multilist label{cursor:pointer;margin:3px 0!important;padding:3px 2px}
+
+/* v17: Visualización compacta bajo Resumen visible */
+.visualization-panel{padding:9px 11px;margin-bottom:8px}
+.visualization-panel h2{font-size:12px;margin:0 0 6px}
+.visualization-panel>label:not(.toggle){font-size:10px;margin-top:4px}
+.visualization-panel select{font-size:11px;padding:6px 8px;margin:3px 0 5px}
+.visualization-panel .toggle{font-size:10.5px;margin:4px 0}
