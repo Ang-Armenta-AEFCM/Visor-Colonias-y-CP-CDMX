@@ -1,7 +1,7 @@
 "use strict";
 const $=id=>document.getElementById(id);
 const clean=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim();
-const isOfficialInmueble=i=>{const id=String(i?.id??'');return !id.startsWith('COORD-')&&!id.startsWith('PROGRAMA-')};
+const isOfficialInmueble=i=>{const id=String(i?.id??'');return !/^(COORD-|PROGRAMA-|base-cct-)/i.test(id)};
 const officialInmuebles=()=>inmuebles.filter(isOfficialInmueble);
 const fmt=n=>Number(n||0).toLocaleString('es-MX');
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
@@ -24,12 +24,12 @@ map.once('load',()=>{mapReady=true;tryInitCoreMap()});
 (async function boot(){
   try{
     const [m,alcs,official]=await Promise.all([
-      jsonFetch('data/manifest.json?v=20261002-cct-6958'),
+      jsonFetch('data/manifest.json?v=20261005-cct-titulo-inmuebles-2769'),
       jsonFetch('data/alcaldias.json'),
-      jsonFetch('data/inmuebles_oficiales.json?v=20261002-cct-6958')
+      jsonFetch('data/inmuebles_oficiales.json?v=20261005-cct-titulo-inmuebles-2769')
     ]);
     meta=m;inmuebles=official;
-    schools=(await Promise.all(m.partes.map(f=>jsonFetch('data/'+f+'?v=20261002-cct-6958')))).flat();schools.forEach((s,i)=>s._idx=i);
+    schools=(await Promise.all(m.partes.map(f=>jsonFetch('data/'+f+'?v=20261005-cct-titulo-inmuebles-2769')))).flat();schools.forEach((s,i)=>s._idx=i);
     schoolByCct=new Map(schools.map(s=>[s.cct,s]));
     alcGeo=decorateAlcaldias(alcs);
     buildControls();if(!controlsBound){bind();controlsBound=true}
@@ -50,6 +50,7 @@ async function loadTerritoryData(){
     $('cpStatusSummary').textContent='Preparando códigos postales…';
     $('colStatusSummary').textContent='Preparando colonias…';
     [cpGeo,colGeo]=await Promise.all([jsonFetch('data/codigos_postales.geojson'),jsonFetch('data/colonias_asentamientos.geojson')]);
+    recountTerritoryInmuebles(cpGeo,'cp');recountTerritoryInmuebles(colGeo,'col');
     territoryReady=true;
     enableTerritoryControls(true);
     refreshTerritoryMenus('cp');refreshTerritoryMenus('colonia');
@@ -59,6 +60,12 @@ async function loadTerritoryData(){
     $('colStatusSummary').textContent='No se pudieron cargar las colonias.';console.error(e)
   }
 }
+function recountTerritoryInmuebles(g,field){
+  const counts=new Map();
+  for(const i of officialInmuebles()){const key=String(i[field]||'');if(key)counts.set(key,(counts.get(key)||0)+1)}
+  for(const f of g.features){const key=String(field==='cp'?f.properties.cp:f.properties.cvegeo);f.properties.inmuebles=counts.get(key)||0}
+}
+
 function enableTerritoryControls(enabled){
   ['fCPStatus','fColStatus','fCP','fColonia','searchCP','searchColonia','downloadCP','downloadCol','showCP','showColonias'].forEach(id=>{if($(id))$(id).disabled=!enabled});
 }
@@ -207,7 +214,7 @@ function state(){return {alcaldias:selectedAlcaldias(),nivel:$('fNivel').value,c
 function filtered(){const s=state();return schools.filter(x=>{if(s.alcaldias.size&&!s.alcaldias.has(x.alcaldia))return false;if(s.nivel&&x.nivel!==s.nivel)return false;if(s.cp&&x.cp!==s.cp)return false;if(s.col&&x.cvegeo_asentamiento!==s.col)return false;if(!s.soste.has(x.sostenimiento_detalle))return false;return true})}
 function filterOfficialInmuebles(){
   const s=state(),visibleCcts=new Set(visible.map(x=>x.cct)),attributeFilter=!!s.nivel||s.soste.size<document.querySelectorAll('input[name=soste]').length,alcClean=new Set([...s.alcaldias].map(clean));
-  return officialInmuebles().filter(i=>{if(alcClean.size&&!alcClean.has(clean(i.alcaldia)))return false;if(s.cp&&String(i.cp)!==String(s.cp))return false;if(s.col&&String(i.col)!==String(s.col))return false;if(attributeFilter&&!i.ccts.some(c=>visibleCcts.has(c)))return false;return true})
+  return officialInmuebles().filter(i=>{if(alcClean.size&&!alcClean.has(clean(i.alcaldia)))return false;if(s.cp&&String(i.cp)!==String(s.cp))return false;if(s.col&&String(i.col)!==String(s.col))return false;if(!i.ccts.some(c=>visibleCcts.has(c)))return false;return true})
 }
 function render(){if(!meta)return;visible=filtered();visibleInm=filterOfficialInmuebles();updateKPIs();renderSchools();renderInmueblesMap();renderLegend();updateSelectedProperties();if($('statsView').classList.contains('active'))renderStats();showTerritoryLayers();showIMVLayer();updateSocioLayer()}
 function updateKPIs(){const s=state();$('kTotal').textContent=fmt(new Set(visible.map(x=>x.cct)).size);$('kInm').textContent=fmt(visibleInm.length);$('kPub').textContent=fmt(visible.filter(x=>x.sostenimiento==='Público').length);$('kPri').textContent=fmt(visible.filter(x=>x.sostenimiento==='Privada').length);const parts=[];if(s.alcaldias.size)parts.push(`${s.alcaldias.size} alcaldía${s.alcaldias.size>1?'s':''}`);if(s.cp)parts.push('CP '+s.cp);if(s.col&&colGeo){const f=colGeo.features.find(y=>String(y.properties.cvegeo)===String(s.col));if(f)parts.push(f.properties.nom_asen)}if(s.nivel)parts.push(s.nivel);$('scopeNote').textContent=parts.length?'Conteo actual: '+parts.join(' · '):`Base completa: ${fmt(meta.total_cct_unicos)} CCT únicos y ${fmt(officialInmuebles().length)} inmuebles.`}
@@ -344,7 +351,7 @@ function renderInmuebles(arr){
  const sorted=[...visible].sort((a,b)=>(a.cp||'').localeCompare(b.cp||'')||(a.nombre||'').localeCompare(b.nombre||''));
  $('inmuebleList').innerHTML=sorted.length?sorted.map(x=>`<div class="inm-row" data-cct="${esc(x.cct)}"><strong>${esc(x.cct)} · ${esc(x.nombre)}</strong><span>${esc(x.nivel)} · ${esc(x.alcaldia)}</span><span>${esc(x.domicilio||'Domicilio no disponible')}</span></div>`).join(''):'<p class="hint">No hay CCT con los filtros actuales.</p>';
 }
-function showInmueble(key){const i=inmuebles.find(x=>x.key===key)||visibleInm.find(x=>x.key===key);if(!i)return;currentInm=i;$('inmTitle').textContent=`${i.id} · ${i.ccts.length} CCT`;$('inmBody').innerHTML=`<div class="inm-meta"><b>Alcaldía</b><span>${esc(i.alcaldia||'—')}</span><b>CP</b><span>${esc(i.cp||'—')}</span><b>Colonia</b><span>${esc(i.asentamiento||'—')}</span><b>Domicilio</b><span>${esc(i.domicilio||'—')}</span><b>Coordenadas</b><span>${Number.isFinite(i.lat)&&Number.isFinite(i.lon)?`${i.lat.toFixed(6)}, ${i.lon.toFixed(6)}`:'Sin coordenadas'}</span></div>${i.ccts.length?i.ccts.map(cct=>{const c=schoolByCct.get(cct),ind=indicadores?.[cct];return c?`<div class="cct-detail"><button type="button" class="open-cct" data-cct="${esc(c.cct)}">${esc(c.cct)} · ${esc(c.nombre)}</button><p><b>Nivel:</b> ${esc(c.nivel)} · <b>Sostenimiento:</b> ${esc(c.sostenimiento_detalle||c.sostenimiento)}</p>${ind?`<p><b>Trayectorias:</b> ${trajectoryFields.filter(([k])=>ind[k]!=null&&clean(c.nivel).includes(k.split('_').at(-1).toUpperCase())).map(([k,l])=>`${esc(l)}: ${ind[k]}`).join(' · ')||'Sin datos'}</p>`:''}</div>`:`<div class="cct-detail"><h4>${esc(cct)}</h4><p>CCT del inmueble sin registro coincidente en la base completa.</p></div>`}).join(''):'<div class="cct-detail"><p>Inmueble oficial sin CCT asociado en esta versión de la base.</p></div>'}`;$('goMapInm').disabled=!(Number.isFinite(i.lat)&&Number.isFinite(i.lon));$('inmModal').classList.add('open')}
+function showInmueble(key){const i=inmuebles.find(x=>x.key===key)||visibleInm.find(x=>x.key===key);if(!i)return;currentInm=i;$('inmTitle').textContent=(i.ccts || []).join(' · ') || 'Sin CCT asociado';$('inmBody').innerHTML=`<div class="inm-meta"><b>Alcaldía</b><span>${esc(i.alcaldia||'—')}</span><b>CP</b><span>${esc(i.cp||'—')}</span><b>Colonia</b><span>${esc(i.asentamiento||'—')}</span><b>Domicilio</b><span>${esc(i.domicilio||'—')}</span><b>Coordenadas</b><span>${Number.isFinite(i.lat)&&Number.isFinite(i.lon)?`${i.lat.toFixed(6)}, ${i.lon.toFixed(6)}`:'Sin coordenadas'}</span></div>${i.ccts.length?i.ccts.map(cct=>{const c=schoolByCct.get(cct),ind=indicadores?.[cct];return c?`<div class="cct-detail"><button type="button" class="open-cct" data-cct="${esc(c.cct)}">${esc(c.cct)} · ${esc(c.nombre)}</button><p><b>Nivel:</b> ${esc(c.nivel)} · <b>Sostenimiento:</b> ${esc(c.sostenimiento_detalle||c.sostenimiento)}</p>${ind?`<p><b>Trayectorias:</b> ${trajectoryFields.filter(([k])=>ind[k]!=null&&clean(c.nivel).includes(k.split('_').at(-1).toUpperCase())).map(([k,l])=>`${esc(l)}: ${ind[k]}`).join(' · ')||'Sin datos'}</p>`:''}</div>`:`<div class="cct-detail"><h4>${esc(cct)}</h4><p>CCT del inmueble sin registro coincidente en la base completa.</p></div>`}).join(''):'<div class="cct-detail"><p>Inmueble oficial sin CCT asociado en esta versión de la base.</p></div>'}`;$('goMapInm').disabled=!(Number.isFinite(i.lat)&&Number.isFinite(i.lon));$('inmModal').classList.add('open')}
 
 
 
