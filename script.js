@@ -24,12 +24,12 @@ map.once('load',()=>{mapReady=true;tryInitCoreMap()});
 (async function boot(){
   try{
     const [m,alcs,official]=await Promise.all([
-      jsonFetch('data/manifest.json'),
+      jsonFetch('data/manifest.json?v=20261002-cct-6958'),
       jsonFetch('data/alcaldias.json'),
-      jsonFetch('data/inmuebles_oficiales.json')
+      jsonFetch('data/inmuebles_oficiales.json?v=20261002-cct-6958')
     ]);
     meta=m;inmuebles=official;
-    schools=(await Promise.all(m.partes.map(f=>jsonFetch('data/'+f)))).flat();schools.forEach((s,i)=>s._idx=i);
+    schools=(await Promise.all(m.partes.map(f=>jsonFetch('data/'+f+'?v=20261002-cct-6958')))).flat();schools.forEach((s,i)=>s._idx=i);
     schoolByCct=new Map(schools.map(s=>[s.cct,s]));
     alcGeo=decorateAlcaldias(alcs);
     buildControls();if(!controlsBound){bind();controlsBound=true}
