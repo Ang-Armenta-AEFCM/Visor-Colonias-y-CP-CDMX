@@ -211,7 +211,7 @@ function showTerritoryLayers(){
 }
 
 function state(){return {alcaldias:selectedAlcaldias(),nivel:$('fNivel').value,cp:$('fCP').value,col:$('fColonia').value,soste:new Set([...document.querySelectorAll('input[name=soste]:checked')].map(x=>x.value))}}
-function filtered(){const s=state();return schools.filter(x=>{if(s.alcaldias.size&&!s.alcaldias.has(x.alcaldia))return false;if(s.nivel&&x.nivel!==s.nivel)return false;if(s.cp&&x.cp!==s.cp)return false;if(s.col&&x.cvegeo_asentamiento!==s.col)return false;if(!s.soste.has(x.sostenimiento_detalle))return false;return true})}
+function filtered(){const s=state(),allSoste=document.querySelectorAll('input[name=soste]').length,sosteCompleto=s.soste.size===allSoste;return schools.filter(x=>{if(s.alcaldias.size&&!s.alcaldias.has(x.alcaldia))return false;if(s.nivel&&x.nivel!==s.nivel)return false;if(s.cp&&x.cp!==s.cp)return false;if(s.col&&x.cvegeo_asentamiento!==s.col)return false;if(!sosteCompleto&&!s.soste.has(x.sostenimiento_detalle))return false;if(sosteCompleto&&x.sostenimiento_detalle&&x.sostenimiento_detalle!=='Sin registro'&&!s.soste.has(x.sostenimiento_detalle))return false;return true})}
 function filterOfficialInmuebles(items=officialInmuebles()){
   const s=state(),visibleCcts=new Set(visible.map(x=>x.cct)),attributeFilter=!!s.nivel||s.soste.size<document.querySelectorAll('input[name=soste]').length,alcClean=new Set([...s.alcaldias].map(clean));
   return items.filter(i=>{if(alcClean.size&&!alcClean.has(clean(i.alcaldia)))return false;if(s.cp&&String(i.cp)!==String(s.cp))return false;if(s.col&&String(i.col)!==String(s.col))return false;if(!i.ccts.some(c=>visibleCcts.has(c)))return false;return true})
